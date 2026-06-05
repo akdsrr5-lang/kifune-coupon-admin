@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>キフネガス｜クーポン管理システム</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=JetBrains+Mono:wght@400;700&display=swap');
+  :root {
+    --green:#00b900;--green-dark:#009900;--green-light:#e8f9e8;
+    --navy:#1a2340;--navy-light:#243060;
+    --gray-bg:#f4f6f9;--gray-border:#dde2ec;--gray-text:#6b7280;
+    --white:#ffffff;--red:#e53e3e;--orange:#dd6b20;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--gray-bg);color:var(--navy);min-height:100vh;}
+  header{background:var(--navy);color:white;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:900;font-size:16px;}
+  .logo-badge{background:var(--green);color:white;padding:3px 8px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:1px;}
+  .header-right{display:flex;align-items:center;gap:16px;font-size:13px;color:rgba(255,255,255,.7);}
+  .staff-badge{background:rgba(255,255,255,.1);padding:4px 12px;border-radius:20px;font-size:12px;}
+  .tabs{background:white;border-bottom:2px solid var(--gray-border);padding:0 24px;display:flex;gap:0;overflow-x:auto;}
+  .tab{padding:16px 18px;font-size:13px;font-weight:500;color:var(--gray-text);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s;white-space:nowrap;}
+  .tab:hover{color:var(--green-dark);}
+  .tab.active{color:var(--green-dark);border-bottom-color:var(--green);font-weight:700;}
+  main{max-width:900px;margin:0 auto;padding:24px 16px;}
+  .screen{display:none;}.screen.active{display:block;}
+  .verify-card{background:white;border-radius:16px;overflow:hidden;box-shadow:0 2px 16px rgba(0,0,0,.07);}
+  .verify-header{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-light) 100%);padding:28px 32px;color:white;}
+  .verify-header h2{font-size:20px;font-weight:700;margin-bottom:6px;}
+  .verify-header p{font-size:13px;opacity:.7;}
+  .verify-body{padding:32px;}
+  .input-label{font-size:12px;font-weight:700;color:var(--gray-text);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+  .code-input-wrap{display:flex;gap:12px;margin-bottom:24px;}
+  .code-input{flex:1;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:700;padding:14px 18px;border:2px solid var(--gray-border);border-radius:10px;outline:none;letter-spacing:2px;color:var(--navy);transition:border-color .2s;}
+  .code-input:focus{border-color:var(--green);}
+  .code-input::placeholder{color:#bbb;font-weight:400;letter-spacing:1px;}
+  .btn-verify{background:var(--green);color:white;border:none;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;font-family:'Noto Sans JP',sans-serif;}
+  .btn-verify:hover{background:var(--green-dark);transform:translateY(-1px);}
+  .result-box{border-radius:12px;padding:24px;margin-top:8px;display:none;animation:fadeIn .3s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+  .result-box.valid{display:block;background:#f0fff4;border:2px solid #68d391;}
+  .result-box.invalid{display:block;background:#fff5f5;border:2px solid #fc8181;}
+  .result-box.used{display:block;background:#fffbeb;border:2px solid #f6ad55;}
+  .result-status{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:900;margin-bottom:16px;}
+  .result-table{background:white;border-radius:8px;overflow:hidden;margin-bottom:16px;}
+  .result-row{display:flex;border-bottom:1px solid #f0f0f0;font-size:14px;}
+  .result-row:last-child{border-bottom:none;}
+  .result-key{width:130px;min-width:130px;background:#f9fafb;padding:12px 16px;font-weight:700;color:var(--gray-text);font-size:12px;}
+  .result-val{padding:12px 16px;font-weight:500;flex:1;}
+  .result-val.mono{font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:1px;}
+  .discount-big{font-size:22px;font-weight:900;color:var(--green-dark);}
+  .memo-box{background:var(--navy);color:white;border-radius:8px;padding:16px 20px;margin-bottom:16px;}
+  .memo-title{font-size:11px;letter-spacing:1px;opacity:.6;margin-bottom:8px;font-weight:700;}
+  .memo-content{font-size:14px;line-height:1.7;}
+  .memo-content span{color:#7fffb4;font-weight:700;}
+  .btn-use{width:100%;background:var(--green);color:white;border:none;padding:16px;border-radius:10px;font-size:16px;font-weight:900;cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif;}
+  .btn-use:hover{background:var(--green-dark);}
+  .btn-use:disabled{background:#ccc;cursor:not-allowed;}
+  .badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
+  .badge-a{background:#bee3f8;color:#2c5282;}.badge-b{background:#c6f6d5;color:#276749;}
+  .badge-c{background:#fed7d7;color:#9b2335;}.badge-e{background:#fefcbf;color:#744210;}
+  .badge-used{background:#fed7aa;color:#7b341e;}.badge-expired{background:#e2e8f0;color:#4a5568;}.badge-valid{background:#c6f6d5;color:#276749;}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+  .stat-card{background:white;border-radius:12px;padding:20px 16px;text-align:center;box-shadow:0 1px 8px rgba(0,0,0,.06);}
+  .stat-num{font-size:28px;font-weight:900;color:var(--navy);font-family:'JetBrains Mono',monospace;}
+  .stat-label{font-size:11px;color:var(--gray-text);margin-top:4px;font-weight:500;}
+  .stat-card.green .stat-num{color:var(--green-dark);}
+  .stat-card.orange .stat-num{color:var(--orange);}
+  .stat-card.red .stat-num{color:var(--red);}
+  .list-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+  .list-title{font-size:16px;font-weight:700;}
+  .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+  .filter-btn{padding:6px 14px;border-radius:20px;border:2px solid var(--gray-border);background:white;font-size:12px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif;color:var(--gray-text);}
+  .filter-btn.active,.filter-btn:hover{background:var(--navy);color:white;border-color:var(--navy);}
+  .coupon-table{background:white;border-radius:12px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.06);}
+  .table-head{display:grid;grid-template-columns:80px 170px 80px 90px 1fr 90px;background:var(--navy);color:white;padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.5px;gap:8px;}
+  .table-row{display:grid;grid-template-columns:80px 170px 80px 90px 1fr 90px;padding:14px 16px;font-size:13px;border-bottom:1px solid #f0f4f8;gap:8px;align-items:center;transition:background .15s;}
+  .table-row:last-child{border-bottom:none;}
+  .table-row:hover{background:#f8fafc;}
+  .table-row.used-row{opacity:.6;}
+  .code-mono{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--navy);letter-spacing:.5px;}
+  .cust-code-mono{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--gray-text);}
+  .form-group{margin-bottom:20px;}
+  .form-label{font-size:12px;font-weight:700;color:var(--gray-text);letter-spacing:.5px;margin-bottom:8px;display:block;}
+  .form-input{width:100%;padding:12px 16px;border:2px solid var(--gray-border);border-radius:8px;font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color .2s;color:var(--navy);}
+  .form-input:focus{border-color:var(--green);}
+  .issue-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+  .issue-card{background:white;border-radius:12px;padding:24px;box-shadow:0 1px 8px rgba(0,0,0,.06);border:2px solid transparent;cursor:pointer;transition:all .2s;}
+  .issue-card:hover,.issue-card.selected{border-color:var(--green);box-shadow:0 4px 16px rgba(0,185,0,.15);}
+  .issue-card-type{font-size:11px;font-weight:700;letter-spacing:1px;color:var(--gray-text);margin-bottom:8px;}
+  .issue-card-name{font-size:16px;font-weight:900;margin-bottom:6px;}
+  .issue-card-desc{font-size:12px;color:var(--gray-text);line-height:1.5;}
+  .cust-input-row{display:flex;gap:10px;align-items:flex-end;}
+  .cust-input-row .form-input{flex:1;}
+  .btn-lookup{background:var(--navy);color:white;border:none;padding:12px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;font-family:'Noto Sans JP',sans-serif;transition:all .2s;}
+  .btn-lookup:hover{background:var(--navy-light);}
+  .lookup-hint{font-size:12px;margin-top:6px;min-height:18px;}
+  .lookup-ok{color:var(--green-dark);font-weight:700;}
+  .lookup-ng{color:var(--red);font-weight:700;}
+  .btn-issue{width:100%;background:var(--navy);color:white;border:none;padding:16px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif;margin-top:8px;}
+  .btn-issue:hover{background:var(--navy-light);transform:translateY(-1px);}
+  .issued-result{background:var(--green-light);border:2px solid var(--green);border-radius:12px;padding:24px;margin-top:16px;display:none;animation:fadeIn .3s ease;}
+  .issued-result.show{display:block;}
+  .issued-code-display{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:900;color:var(--navy);letter-spacing:3px;background:white;padding:16px 20px;border-radius:8px;text-align:center;margin:12px 0;border:2px dashed var(--green);}
+  .master-toolbar{display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap;}
+  .master-search{flex:1;min-width:200px;padding:10px 16px;border:2px solid var(--gray-border);border-radius:8px;font-size:14px;font-family:'Noto Sans JP',sans-serif;outline:none;transition:border-color .2s;}
+  .master-search:focus{border-color:var(--green);}
+  .master-table{background:white;border-radius:12px;overflow:hidden;box-shadow:0 1px 8px rgba(0,0,0,.06);}
+  .master-head{display:grid;grid-template-columns:120px 1fr 80px 80px;background:var(--navy);color:white;padding:12px 16px;font-size:11px;font-weight:700;letter-spacing:.5px;gap:8px;}
+  .master-row{display:grid;grid-template-columns:120px 1fr 80px 80px;padding:13px 16px;font-size:13px;border-bottom:1px solid #f0f4f8;gap:8px;align-items:center;transition:background .15s;}
+  .master-row:last-child{border-bottom:none;}
+  .master-row:hover{background:#f8fafc;}
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px;}
+  .modal-box{background:white;border-radius:16px;padding:32px;width:100%;max-width:420px;box-shadow:0 16px 48px rgba(0,0,0,.2);animation:fadeIn .2s ease;}
+  .modal-title{font-size:18px;font-weight:900;margin-bottom:24px;}
+  .modal-actions{display:flex;gap:12px;margin-top:24px;}
+  .btn-modal-ok{flex:1;background:var(--green);color:white;border:none;padding:13px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .btn-modal-cancel{flex:1;background:#f0f4f8;color:var(--navy);border:none;padding:13px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:white;padding:14px 20px;border-radius:10px;font-size:14px;font-weight:500;box-shadow:0 8px 24px rgba(0,0,0,.2);transform:translateY(80px);opacity:0;transition:all .3s;z-index:999;}
+  .toast.show{transform:translateY(0);opacity:1;}
+  .loading{text-align:center;padding:32px;color:var(--gray-text);font-size:14px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span>🔥 KIFUNE-GAS</span>
+    <span class="logo-badge">COUPON SYSTEM</span>
+  </div>
+  <div class="header-right">
+    <span class="staff-badge">👤 スタッフ用</span>
+    <span id="clockDisplay"></span>
+  </div>
+</header>
+
+<div class="tabs">
+  <div class="tab active" onclick="switchTab('verify',this)">🔍 クーポン照合</div>
+  <div class="tab" onclick="switchTab('list',this)">📋 一覧・履歴</div>
+  <div class="tab" onclick="switchTab('issue',this)">➕ 手動発行</div>
+  <div class="tab" onclick="switchTab('master',this)">👥 顧客マスタ</div>
+</div>
+
+<main>
+
+  <!-- 照合 -->
+  <div class="screen active" id="screen-verify">
+    <div class="verify-card">
+      <div class="verify-header">
+        <h2>🔍 クーポンコード照合</h2>
+        <p>お客様のLINEに表示されたコードを入力してください</p>
+      </div>
+      <div class="verify-body">
+        <div class="input-label">クーポンコード</div>
+        <div class="code-input-wrap">
+          <input class="code-input" id="codeInput" type="text"
+            placeholder="KFN-A-20250528-0001"
+            oninput="this.value=this.value.toUpperCase()"
+            onkeydown="if(event.key==='Enter')verifyCoupon()">
+          <button class="btn-verify" onclick="verifyCoupon()">照合する</button>
+        </div>
+        <div class="result-box" id="resultBox">
+          <div class="result-status" id="resultStatus"></div>
+          <div class="result-table" id="resultTable"></div>
+          <div class="memo-box" id="memoPOS" style="display:none"></div>
+          <button class="btn-use" id="btnUse" onclick="useCoupon()" style="display:none">✅ 使用済みにする</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 一覧 -->
+  <div class="screen" id="screen-list">
+    <div class="stats-grid">
+      <div class="stat-card green"><div class="stat-num" id="statTotal">0</div><div class="stat-label">発行総数</div></div>
+      <div class="stat-card"><div class="stat-num" id="statUnused">0</div><div class="stat-label">未使用</div></div>
+      <div class="stat-card orange"><div class="stat-num" id="statUsed">0</div><div class="stat-label">使用済み</div></div>
+      <div class="stat-card red"><div class="stat-num" id="statExpired">0</div><div class="stat-label">期限切れ</div></div>
+    </div>
+    <div class="list-header"><div class="list-title">クーポン一覧</div></div>
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterList('all',this)">すべて</button>
+      <button class="filter-btn" onclick="filterList('unused',this)">未使用</button>
+      <button class="filter-btn" onclick="filterList('used',this)">使用済み</button>
+      <button class="filter-btn" onclick="filterList('A',this)">Aタイプ</button>
+      <button class="filter-btn" onclick="filterList('B',this)">Bタイプ</button>
+      <button class="filter-btn" onclick="filterList('C',this)">Cタイプ</button>
+      <button class="filter-btn" onclick="filterList('E',this)">Eタイプ</button>
+    </div>
+    <div class="coupon-table">
+      <div class="table-head">
+        <div>顧客コード</div>
+        <div>クーポンコード</div>
+        <div>種別</div>
+        <div>ステータス</div>
+        <div>お客様名</div>
+        <div>有効期限</div>
+      </div>
+      <div id="couponList"><div class="loading">読み込み中...</div></div>
+    </div>
+  </div>
+
+  <!-- 手動発行 -->
+  <div class="screen" id="screen-issue">
+    <div style="background:white;border-radius:16px;padding:28px;box-shadow:0 2px 16px rgba(0,0,0,.07);">
+      <h2 style="font-size:18px;font-weight:900;margin-bottom:6px;">➕ クーポン手動発行</h2>
+      <p style="font-size:13px;color:var(--gray-text);margin-bottom:24px;">特別対応時に使用</p>
+      <div class="form-group">
+        <label class="form-label">クーポン種別を選択</label>
+        <div class="issue-grid">
+          <div class="issue-card selected" onclick="selectType('A',this)">
+            <div class="issue-card-type">TYPE A</div>
+            <div class="issue-card-name">🔥 ガス料金 10%OFF</div>
+            <div class="issue-card-desc">既存ガス利用者向け<br>来月検針分のガス料金10%割引<br>有効期限：翌月末まで</div>
+          </div>
+          <div class="issue-card" onclick="selectType('B',this)">
+            <div class="issue-card-type">TYPE B</div>
+            <div class="issue-card-name">🔧 器具・工事費 10%OFF</div>
+            <div class="issue-card-desc">既存ガス利用者向け<br>器具・工事費10%割引<br>有効期限：6ヶ月</div>
+          </div>
+          <div class="issue-card" onclick="selectType('C',this)">
+            <div class="issue-card-type">TYPE C</div>
+            <div class="issue-card-name">🆕 器具・工事費 10%OFF</div>
+            <div class="issue-card-desc">非ガス利用者向け<br>器具・工事費10%割引<br>有効期限：6ヶ月</div>
+          </div>
+          <div class="issue-card" onclick="selectType('E',this)">
+            <div class="issue-card-type">TYPE E</div>
+            <div class="issue-card-name">🏠 補助金給湯器・エコキュート紹介</div>
+            <div class="issue-card-desc">全お客様対象<br>補助金対象給湯器・エコキュート紹介<br>1戸あたり現金1万円贈呈・有効期限なし</div>
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">顧客コード <span style="font-weight:400;color:var(--gray-text)">（入力すると名前が自動入力されます）</span></label>
+        <div class="cust-input-row">
+          <input class="form-input" id="issueCustomerCode" type="text" placeholder="例：10010094"
+            oninput="this.value=this.value.toUpperCase()"
+            onkeydown="if(event.key==='Enter')lookupCustomer()">
+          <button class="btn-lookup" onclick="lookupCustomer()">検索</button>
+        </div>
+        <div class="lookup-hint" id="lookupHint"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">お客様名</label>
+        <input class="form-input" id="issueName" type="text" placeholder="顧客コード検索後に自動入力、または直接入力">
+      </div>
+      <div class="form-group">
+        <label class="form-label">備考（任意）</label>
+        <input class="form-input" id="issueNote" type="text" placeholder="例：〇〇さんのご紹介">
+      </div>
+      <button class="btn-issue" onclick="issueManualCoupon()">クーポンを発行する</button>
+      <div class="issued-result" id="issuedResult">
+        <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:4px;">✅ クーポン発行完了</div>
+        <div class="issued-code-display" id="issuedCodeDisplay"></div>
+        <div style="font-size:13px;color:var(--gray-text);" id="issuedDetail"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 顧客マスタ -->
+  <div class="screen" id="screen-master">
+    <div style="background:white;border-radius:16px;padding:28px;box-shadow:0 2px 16px rgba(0,0,0,.07);">
+      <h2 style="font-size:18px;font-weight:900;margin-bottom:6px;">👥 顧客マスタ</h2>
+      <p style="font-size:13px;color:var(--gray-text);margin-bottom:20px;">Supabaseの顧客データを表示します。</p>
+      <div class="master-toolbar">
+        <input class="master-search" id="masterSearch" type="text" placeholder="顧客コード・名前で検索…" oninput="renderMaster()">
+      </div>
+      <div class="master-table">
+        <div class="master-head">
+          <div>顧客コード</div>
+          <div>お客様名</div>
+          <div>区分</div>
+          <div>住所</div>
+        </div>
+        <div id="masterList"><div class="loading">読み込み中...</div></div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<div class="modal-overlay" id="addModal" style="display:none">
+  <div class="modal-box">
+    <div class="modal-title">確認</div>
+    <div id="modalMessage"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-cancel" onclick="closeModal()">キャンセル</button>
+      <button class="btn-modal-ok" id="modalOkBtn">確認</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const SUPABASE_URL = 'https://yjkzeblonkemxumselsx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inlqa3plYmxvbmtlbXh1bXNlbHN4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4MDE0Mzk3MSwiZXhwIjoyMDk1NzE5OTcxfQ.7NFwEsWUmlEldgg1w8Tr5rfpjHYoBKHaKvpILlApgPg';
+
+const pad = n => String(n).padStart(2,'0');
+const dateStr = d => d ? `${new Date(d).getFullYear()}/${pad(new Date(d).getMonth()+1)}/${pad(new Date(d).getDate())}` : '―';
+const today = new Date();
+
+const TYPE_INFO = {
+  A:{name:'ガス料金 10%OFF',desc:'来月検針分ガス料金'},
+  B:{name:'器具・工事費 10%OFF',desc:'器具・工事費'},
+  C:{name:'器具・工事費 10%OFF',desc:'器具・工事費（非ガス利用者）'},
+  E:{name:'補助金給湯器・エコキュート紹介',desc:'補助金対象給湯器・エコキュート紹介'}
+};
+
+async function sbFetch(path, options={}) {
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    ...options,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': options.method === 'POST' ? 'return=representation' : undefined,
+      ...options.headers
+    }
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+}
+
+// ===== タブ =====
+function switchTab(tab, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('screen-' + tab).classList.add('active');
+  if (tab === 'list') loadList('all');
+  if (tab === 'master') loadMaster();
+}
+
+// ===== 照合 =====
+let currentCoupon = null;
+async function verifyCoupon() {
+  const code = document.getElementById('codeInput').value.trim();
+  if (!code) { showToast('コードを入力してください'); return; }
+  const box = document.getElementById('resultBox');
+  box.className = 'result-box';
+  document.getElementById('memoPOS').style.display = 'none';
+  document.getElementById('btnUse').style.display = 'none';
+  currentCoupon = null;
+  try {
+    const data = await sbFetch('coupons?code=eq.' + encodeURIComponent(code));
+    if (!data || data.length === 0) {
+      box.classList.add('invalid');
+      document.getElementById('resultStatus').innerHTML = '<span>🚫</span><span style="color:var(--red)">コードが見つかりません</span>';
+      document.getElementById('resultTable').innerHTML = `<div class="result-row"><div class="result-key">入力コード</div><div class="result-val mono">${code}</div></div><div class="result-row"><div class="result-key">結果</div><div class="result-val" style="color:var(--red)">このコードは存在しません</div></div>`;
+      return;
+    }
+    const c = data[0];
+    const info = TYPE_INFO[c.type] || {name:c.type, desc:''};
+    if (c.status === 'used') {
+      box.classList.add('used');
+      document.getElementById('resultStatus').innerHTML = '<span>⚠️</span><span style="color:var(--orange)">このクーポンは使用済みです</span>';
+      document.getElementById('resultTable').innerHTML = `
+        <div class="result-row"><div class="result-key">顧客コード</div><div class="result-val mono">${c.customer_code||'―'}</div></div>
+        <div class="result-row"><div class="result-key">お客様名</div><div class="result-val">${c.name}</div></div>
+        <div class="result-row"><div class="result-key">種別</div><div class="result-val">${c.type}タイプ ${info.name}</div></div>
+        <div class="result-row"><div class="result-key">使用日時</div><div class="result-val" style="color:var(--orange);font-weight:700;">${c.used_at ? new Date(c.used_at).toLocaleString('ja-JP') : '―'}</div></div>`;
+      return;
+    }
+    if (c.expires_at && new Date(c.expires_at) < today) {
+      box.classList.add('invalid');
+      document.getElementById('resultStatus').innerHTML = '<span>⏰</span><span style="color:var(--red)">有効期限が切れています</span>';
+      document.getElementById('resultTable').innerHTML = `
+        <div class="result-row"><div class="result-key">お客様名</div><div class="result-val">${c.name}</div></div>
+        <div class="result-row"><div class="result-key">有効期限</div><div class="result-val" style="color:var(--red);font-weight:700;">${dateStr(c.expires_at)}（期限切れ）</div></div>`;
+      return;
+    }
+    box.classList.add('valid');
+    currentCoupon = c;
+    document.getElementById('resultStatus').innerHTML = '<span>✅</span><span style="color:var(--green-dark)">クーポン有効・未使用です</span>';
+    document.getElementById('resultTable').innerHTML = `
+      <div class="result-row"><div class="result-key">顧客コード</div><div class="result-val mono">${c.customer_code||'―'}</div></div>
+      <div class="result-row"><div class="result-key">お客様名</div><div class="result-val" style="font-size:16px;font-weight:900;">${c.name}</div></div>
+      <div class="result-row"><div class="result-key">クーポンコード</div><div class="result-val mono">${c.code}</div></div>
+      <div class="result-row"><div class="result-key">種別</div><div class="result-val">${c.type}タイプ ${info.name}</div></div>
+      <div class="result-row"><div class="result-key">有効期限</div><div class="result-val" style="color:var(--green-dark);font-weight:700;">${c.expires_at ? dateStr(c.expires_at)+'まで' : '無期限'}</div></div>`;
+    document.getElementById('memoPOS').style.display = 'block';
+    document.getElementById('memoPOS').innerHTML = `
+      <div class="memo-title">📋 処理メモ</div>
+      <div class="memo-content">顧客コード：<span>${c.customer_code||'―'}</span>　顧客名：<span>${c.name}</span><br>値引き種別：<span>${info.desc} 10%OFF</span><br>クーポンコード：<span>${c.code}</span></div>`;
+    document.getElementById('btnUse').style.display = 'block';
+  } catch(e) {
+    showToast('エラー：' + e.message);
+  }
+}
+
+async function useCoupon() {
+  if (!currentCoupon) return;
+  if (!confirm(`${currentCoupon.name} さんのクーポンを使用済みにします。よろしいですか？`)) return;
+  try {
+    await sbFetch('coupons?code=eq.' + encodeURIComponent(currentCoupon.code), {
+      method: 'PATCH',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify({ status: 'used', used_at: new Date().toISOString() })
+    });
+    document.getElementById('btnUse').disabled = true;
+    document.getElementById('btnUse').textContent = '✅ 使用済みにしました';
+    showToast('✅ クーポンを使用済みにしました');
+    currentCoupon = null;
+  } catch(e) {
+    showToast('エラー：' + e.message);
+  }
+}
+
+// ===== 一覧 =====
+let allCoupons = [];
+async function loadList(filter) {
+  document.getElementById('couponList').innerHTML = '<div class="loading">読み込み中...</div>';
+  try {
+    const data = await sbFetch('coupons?order=issued_at.desc');
+    allCoupons = data || [];
+    renderList(filter);
+  } catch(e) {
+    document.getElementById('couponList').innerHTML = '<div class="loading">読み込みエラー</div>';
+  }
+}
+
+function renderList(filter) {
+  const now = new Date();
+  let list = allCoupons.map(c => ({
+    ...c,
+    realStatus: c.status === 'used' ? 'used' : (c.expires_at && new Date(c.expires_at) < now ? 'expired' : 'unused')
+  }));
+  document.getElementById('statTotal').textContent = list.length;
+  document.getElementById('statUnused').textContent = list.filter(c => c.realStatus === 'unused').length;
+  document.getElementById('statUsed').textContent = list.filter(c => c.realStatus === 'used').length;
+  document.getElementById('statExpired').textContent = list.filter(c => c.realStatus === 'expired').length;
+  if (filter === 'unused') list = list.filter(c => c.realStatus === 'unused');
+  else if (filter === 'used') list = list.filter(c => c.realStatus === 'used');
+  else if (['A','B','C','E'].includes(filter)) list = list.filter(c => c.type === filter);
+  const el = document.getElementById('couponList');
+  if (!list.length) { el.innerHTML = '<div style="padding:32px;text-align:center;color:var(--gray-text);font-size:14px;">該当するクーポンがありません</div>'; return; }
+  const bm = {unused:'<span class="badge badge-valid">未使用</span>',used:'<span class="badge badge-used">使用済み</span>',expired:'<span class="badge badge-expired">期限切れ</span>'};
+  el.innerHTML = list.map(c => `
+    <div class="table-row ${c.realStatus==='used'?'used-row':''}">
+      <div class="cust-code-mono">${c.customer_code||'―'}</div>
+      <div class="code-mono" style="font-size:11px;">${c.code}</div>
+      <div><span class="badge badge-${c.type.toLowerCase()}">${c.type}</span></div>
+      <div>${bm[c.realStatus]}</div>
+      <div style="font-size:13px;">${c.name}</div>
+      <div style="font-size:12px;color:var(--gray-text);">${c.expires_at ? dateStr(c.expires_at) : '無期限'}</div>
+    </div>`).join('');
+}
+
+function filterList(filter, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList(filter);
+}
+
+// ===== 手動発行 =====
+let selectedType = 'A';
+function selectType(type, el) {
+  selectedType = type;
+  document.querySelectorAll('.issue-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+async function lookupCustomer() {
+  const code = document.getElementById('issueCustomerCode').value.trim();
+  const hint = document.getElementById('lookupHint');
+  const nameInput = document.getElementById('issueName');
+  if (!code) { hint.innerHTML = ''; nameInput.value = ''; return; }
+  try {
+    const data = await sbFetch('customers?customer_code=eq.' + encodeURIComponent(code));
+    if (data && data.length > 0) {
+      nameInput.value = data[0].name;
+      hint.innerHTML = `<span class="lookup-ok">✅ ${data[0].name} さんが見つかりました</span>`;
+    } else {
+      nameInput.value = '';
+      hint.innerHTML = `<span class="lookup-ng">⚠️ 顧客コードが見つかりません。名前を直接入力してください。</span>`;
+    }
+  } catch(e) {
+    hint.innerHTML = `<span class="lookup-ng">エラー：${e.message}</span>`;
+  }
+}
+
+async function issueManualCoupon() {
+  const custCode = document.getElementById('issueCustomerCode').value.trim().toUpperCase();
+  const name = document.getElementById('issueName').value.trim();
+  const note = document.getElementById('issueNote').value.trim();
+  if (!name) { showToast('お客様名を入力してください'); return; }
+  const now = new Date();
+  const rand = Math.random().toString(36).substr(2,6).toUpperCase();
+  const dateKey = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+  const code = `KFN-${selectedType}-${dateKey}-${rand}`;
+  let exp = null;
+  if (selectedType === 'A') {
+    exp = new Date(now.getFullYear(), now.getMonth()+2, 0).toISOString();
+  } else if (selectedType !== 'E') {
+    const e = new Date(now); e.setMonth(e.getMonth()+6);
+    exp = e.toISOString();
+  }
+  try {
+    await sbFetch('coupons', {
+      method: 'POST',
+      headers: { 'Prefer': 'return=minimal' },
+      body: JSON.stringify({
+        code, type: selectedType,
+        customer_code: custCode || null,
+        name, status: 'unused',
+        issued_at: now.toISOString(),
+        expires_at: exp,
+        note: note || ''
+      })
+    });
+    document.getElementById('issuedResult').classList.add('show');
+    document.getElementById('issuedCodeDisplay').textContent = code;
+    document.getElementById('issuedDetail').innerHTML = `種別：${selectedType}タイプ／${TYPE_INFO[selectedType].name}<br>顧客コード：${custCode||'未設定'}　お客様：${name}<br>有効期限：${exp ? dateStr(exp)+'まで' : '無期限'}${note?'<br>備考：'+note:''}`;
+    showToast('✅ クーポンを発行しました');
+  } catch(e) {
+    showToast('エラー：' + e.message);
+  }
+}
+
+// ===== 顧客マスタ =====
+let allCustomers = [];
+async function loadMaster() {
+  document.getElementById('masterList').innerHTML = '<div class="loading">読み込み中...</div>';
+  try {
+    const data = await sbFetch('customers?order=customer_code.asc');
+    allCustomers = data || [];
+    renderMaster();
+  } catch(e) {
+    document.getElementById('masterList').innerHTML = '<div class="loading">読み込みエラー</div>';
+  }
+}
+
+function renderMaster() {
+  const q = document.getElementById('masterSearch').value.trim().toLowerCase();
+  let list = allCustomers;
+  if (q) list = list.filter(c => c.customer_code.toLowerCase().includes(q) || c.name.toLowerCase().includes(q));
+  const el = document.getElementById('masterList');
+  if (!list.length) { el.innerHTML = '<div style="padding:24px;text-align:center;color:var(--gray-text);font-size:14px;">該当する顧客がいません</div>'; return; }
+  el.innerHTML = list.map(c => `
+    <div class="master-row">
+      <div class="code-mono">${c.customer_code}</div>
+      <div style="font-weight:500;">${c.name}</div>
+      <div><span class="badge ${c.type==='賃貸'?'badge-used':'badge-valid'}">${c.type||'個人'}</span></div>
+      <div style="font-size:12px;color:var(--gray-text);">${c.address||'―'}</div>
+    </div>`).join('');
+}
+
+function closeModal() { document.getElementById('addModal').style.display = 'none'; }
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clockDisplay').textContent = `${n.getFullYear()}/${pad(n.getMonth()+1)}/${pad(n.getDate())} ${pad(n.getHours())}:${pad(n.getMinutes())}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
