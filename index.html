@@ -291,23 +291,19 @@ const TYPE_INFO = {
 };
 
 async function api(action, params = {}) {
-  const res = await fetch(GAS_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ adminRequest: true, password: ADMIN_PASS, action, ...params })
-  });
+  const payload = JSON.stringify({ password: ADMIN_PASS, action, ...params });
+  const url = GAS_URL + '?payload=' + encodeURIComponent(payload);
+  const res = await fetch(url, { method: 'GET' });
   const json = await res.json();
   if (!json.ok) {
     if (json.error === 'auth') {
       ADMIN_PASS = '';
       sessionStorage.removeItem('kifunePass');
-      location.reload();
     }
     throw new Error(json.error || '不明なエラー');
   }
   return json;
 }
-
 async function doLogin() {
   const pass = document.getElementById('passInput').value.trim();
   const errEl = document.getElementById('loginError');
